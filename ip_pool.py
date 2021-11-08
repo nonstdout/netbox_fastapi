@@ -1,12 +1,5 @@
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-from dnacentersdk import DNACenterAPI
-import time
 
 
-dnac = DNACenterAPI(base_url='https://10.9.11.226',
-                            username='***REMOVED***',password='***REMOVED***', verify=False, version="2.2.2.3")
 
 def get_execution_status(dnac, execution_id):
     return dnac.custom_caller.call_api('GET',
@@ -14,6 +7,7 @@ def get_execution_status(dnac, execution_id):
 
 def check_task_completion(dnac, execution_id):
     """Check status of task."""
+    import time
     while True:
         response = get_execution_status(dnac, execution_id)
         if response.endTime == None:
@@ -54,6 +48,7 @@ def create_global_pool(dnac, pool_type='generic', **kwargs):
             if pool['ipPoolName'] == kwargs['pool_name']:
                 created_global_pool = pool['ipPoolName']
                 print(created_global_pool)
+                return {"status": "SUCCESS"}
 
     else:
         # Get task error details
@@ -104,12 +99,12 @@ def get_parent_pool_id_dna(dnac, pool_name):
     return pool.response[0].id
 
 # Implementation of non-public API as public API is broken
-def reserve_subpool(dnac, site_id, **kwargs):
+def reserve_subpool(dnac, **kwargs):
     payload = {
         "groupName": kwargs['name'],
         "groupOwner": "DNAC",
-        "type": kwargs['type'],
-        "siteId": site_id,
+        "type": kwargs['type_'],
+        "siteId": kwargs['site_id'],
         "ipPools": [
             {
                 "parentUuid": get_parent_pool_id_dna(dnac, kwargs['global_pool_name']),
@@ -132,63 +127,91 @@ def reserve_subpool(dnac, site_id, **kwargs):
     task_subpool = dnac.task.get_task_by_id(task_id=subpool.response.taskId)
 
     # completed tasks have an endtime attribute
+    import time
     while not task_subpool.response.endTime:
-        print(task_subpool.response.progress)
+        # print(task_subpool.response.progress)
         time.sleep(1)
         # check task has completed, reassign variable
         task_subpool = dnac.task.get_task_by_id(task_id=subpool.response.taskId)
     if not task_subpool.response.isError:
         print(f"Subpool Created Sucessfully")
+        # print(task_subpool)
+        return {"status": "SUCCESS"}
 
     else:
         # Get task error details
         print('Unfortunately ', task_subpool.response.progress)
         print('Reason: ', task_subpool.response.failureReason)
 
-# def release_subpool(dnac, subpool_id):
+def release_subpool(dnac, site_id):
+    subpool_id = dnac.network_settings.get_reserve_ip_subpool(site_id=site_id).response[0].id
+    execution_id = dnac.network_settings.release_reserve_ip_subpool(subpool_id)['executionId']
+    task_status = check_task_completion(dnac, execution_id)
+    return task_status
 
 
-global_pool_obj = {
-    "pool_name": "test_global_pool",
-    "dhcp_servers": ["1.1.1.1"],
-    "dns_servers": ["2.2.2.2"],
-    "supernet": "192.168.1.0/24"
-}
-# create_global_pool(dnac, **global_pool_obj)
 
 
-subpool_obj = {
-    "global_pool_name": "test_global_pool",
-    "name": "testsubpool",
-    "type": "generic",
-    "ipv6AddressSpace": False,
-    "ipv4GlobalPool": "192.168.1.0/24",
-    "ipv4Prefix": True,
-    "ipv4PrefixLength": 25,
-    "ipv4Subnet": "192.168.1.0",
-    "ipv4GateWay": "192.168.1.1",
-    "ipv4DhcpServers": [
-        "1.2.3.4",
-        "1.2.3.5"
-    ],
-    "ipv4DnsServers": [
-        "1.2.3.4",
-        "1.2.3.5"
-    ]
-}
-
-## setup site for testing, get id
-# import create_site
-# create_site.create_area(dnac)
 
 
-# site_id = dnac.sites.get_site(name="Global/testarea").response[0].id
-# reserve_subpool(dnac, site_id, **subpool_obj)
 
-# cleanup
-# release subpool
-# subpool_id = dnac.network_settings.get_reserve_ip_subpool(site_id=site_id).response[0].id
-# execution_id = dnac.network_settings.release_reserve_ip_subpool(subpool_id)['executionId']
-# task_status = check_task_completion(dnac, execution_id)
-# delete global pool
-delete_global_pool(dnac, 'test_global_pool')
+
+def main():
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    from dnacentersdk import DNACenterAPI
+
+
+
+    dnac = DNACenterAPI(base_url='https://10.9.11.226',
+                                username='***REMOVED***',password='***REMOVED***', verify=False, version="2.2.2.3")
+        ## setup site for testing, get id
+    import create_site
+    create_site.create_area(dnac)
+
+    global_pool_obj = {
+        "pool_name": "test_global_pool",
+        "dhcp_servers": ["1.1.1.1"],
+        "dns_servers": ["2.2.2.2"],
+        "supernet": "192.168.1.0/24"
+    }
+
+    create_global_pool(dnac, **global_pool_obj)
+
+    subpool_obj = {
+        "global_pool_name": "test_global_pool",
+        "name": "testsubpool",
+        "_type": "generic",
+        "ipv6AddressSpace": False,
+        "ipv4GlobalPool": "192.168.1.0/24",
+        "ipv4Prefix": True,
+        "ipv4PrefixLength": 25,
+        "ipv4Subnet": "192.168.1.0",
+        "ipv4GateWay": "192.168.1.1",
+        "ipv4DhcpServers": [
+            "1.2.3.4",
+            "1.2.3.5"
+        ],
+        "ipv4DnsServers": [
+            "1.2.3.4",
+            "1.2.3.5"
+        ]
+    }
+
+    site_id = dnac.sites.get_site(name="Global/testarea").response[0].id
+    reserve_subpool(dnac, site_id, **subpool_obj)
+
+    # cleanup
+    # release subpool
+    release_subpool(dnac, site_id)
+    # delete global pool
+    delete_global_pool(dnac, 'test_global_pool')
+    # cleanup created site
+    create_site.delete_sites(dnac)
+
+
+if __name__ == "__main__":
+    main()
+
+

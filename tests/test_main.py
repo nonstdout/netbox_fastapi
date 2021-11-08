@@ -56,7 +56,68 @@ def test_create_floor():
     assert response.status_code == 201
     assert response.json()['status'] == "SUCCESS"
 
-# clean up created sites after tests
+def test_create_global_pool():
+    global_pool_obj = {
+        "pool_name": "test_global_pool",
+        "dhcp_servers": ["1.1.1.1"],
+        "dns_servers": ["2.2.2.2"],
+        "supernet": "192.168.1.0/24"
+    }   
+
+    response = client.post("/pool/global", json=global_pool_obj)
+    assert response.status_code == 201
+    assert response.json()['status'] == "SUCCESS"
+
+def test_reserve_subpool():
+    site_id = dnac.sites.get_site(name="Global/testarea").response[0].id
+    subpool_obj = {
+        "site_id": site_id,
+        "global_pool_name": "test_global_pool",
+        "name": "testsubpool",
+        "type_": "generic",
+        "ipv6AddressSpace": False,
+        "ipv4GlobalPool": "192.168.1.0/24",
+        "ipv4Prefix": True,
+        "ipv4PrefixLength": 25,
+        "ipv4Subnet": "192.168.1.0",
+        "ipv4GateWay": "192.168.1.1",
+        "ipv4DhcpServers": [
+            "1.2.3.4",
+            "1.2.3.5"
+        ],
+        "ipv4DnsServers": [
+            "1.2.3.4",
+            "1.2.3.5"
+        ]
+    }
+    
+
+    response = client.post("/pool/subpool", json=subpool_obj)
+    assert response.status_code == 201
+    assert response.json()['status'] == "SUCCESS"
+
+def test_release_subpool():
+    site_id = dnac.sites.get_site(name="Global/testarea").response[0].id
+    site_id = {
+        "site_id": site_id
+    }
+
+    print(site_id)
+
+    response = client.delete("/pool/subpool", json=site_id)
+    assert response.status_code == 202
+    assert response.json()['status'] == "SUCCESS"
+
+def test_delete_global_pool():
+    pool_name = {
+        "pool_name": "test_global_pool"
+    }
+
+    response = client.delete("/pool/global", json=pool_name)
+    assert response.status_code == 202
+    assert response.json()['status'] == "SUCCESS"
+
+# # clean up created sites after tests
 def test_delete_sites():
     response = create_site.delete_sites(dnac)
     assert json.loads(response)['status'] == "SUCCESS"

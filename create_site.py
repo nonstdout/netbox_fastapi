@@ -21,7 +21,7 @@ def check_task_completion(dnac, execution_id):
             print(f'TASK {response.status}! Error: {response.bapiError}')
             return None
 
-def create_area(dnac, site):
+def create_area(dnac, site=None):
 
     site = {
             "area": {
@@ -34,7 +34,7 @@ def create_area(dnac, site):
     task_status = check_task_completion(dnac, execution_id)
     return task_status
 
-def create_building(dnac, site):
+def create_building(dnac, site=None):
 
     site = {
             "building": {
@@ -48,7 +48,7 @@ def create_building(dnac, site):
     task_status = check_task_completion(dnac, execution_id)
     return task_status
 
-def create_floor(dnac, site):
+def create_floor(dnac, site=None):
 
     site = {
             "floor": {
