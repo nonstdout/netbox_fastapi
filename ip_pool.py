@@ -1,5 +1,5 @@
 
-
+import os
 
 def get_execution_status(dnac, execution_id):
     return dnac.custom_caller.call_api('GET',
@@ -165,7 +165,7 @@ def main():
 
 
     dnac = DNACenterAPI(base_url='https://10.9.11.226',
-                                username='***REMOVED***',password='***REMOVED***', verify=False, version="2.2.2.3")
+                                    username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
         ## setup site for testing, get id
     import create_site
     create_site.create_area(dnac)

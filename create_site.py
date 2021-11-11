@@ -1,4 +1,32 @@
 import json
+from pydantic import BaseModel
+import os
+
+class ChildArea(BaseModel):
+    name: str
+    parentName: str
+
+class Area(BaseModel):
+    area: ChildArea
+
+class ChildBuilding(BaseModel):
+    name: str
+    parentName: str
+    address: str
+
+class Building(BaseModel):
+    building: ChildBuilding
+
+class ChildFloor(BaseModel):
+    name: str
+    parentName: str
+    rfModel: str
+    width: int
+    length: int
+    height: int
+
+class Floor(BaseModel):
+    floor: ChildFloor
 
 def get_execution_status(dnac, execution_id):
     return dnac.custom_caller.call_api('GET',
@@ -21,47 +49,22 @@ def check_task_completion(dnac, execution_id):
             print(f'TASK {response.status}! Error: {response.bapiError}')
             return None
 
-def create_area(dnac, site=None):
+def create_area(dnac, area:Area):
 
-    site = {
-            "area": {
-            "name": "testarea",
-            "parentName": "Global",
-            }
-        }     
     site_type = "area" 
-    execution_id = dnac.sites.create_site(site=site, type=site_type)["executionId"]
+    execution_id = dnac.sites.create_site(site=area, type=site_type)["executionId"]
     task_status = check_task_completion(dnac, execution_id)
     return task_status
 
-def create_building(dnac, site=None):
-
-    site = {
-            "building": {
-            "name": "testbuilding",
-            "parentName": "Global/testarea",
-            "address": "unknown",
-            }
-        }     
+def create_building(dnac, building: Building):    
     site_type = "building" 
-    execution_id = dnac.sites.create_site(site=site, type=site_type)["executionId"]
+    execution_id = dnac.sites.create_site(site=building, type=site_type)["executionId"]
     task_status = check_task_completion(dnac, execution_id)
     return task_status
 
-def create_floor(dnac, site=None):
-
-    site = {
-            "floor": {
-            "name": "testfloor",
-            "parentName": "Global/testarea/testbuilding",
-            "rfModel": "Cubes And Walled Offices",
-            "width": 5,
-            "length": 5,
-            "height": 5,
-            }
-        }     
+def create_floor(dnac, floor: Floor):  
     site_type = "floor" 
-    execution_id = dnac.sites.create_site(site=site, type=site_type)["executionId"]
+    execution_id = dnac.sites.create_site(site=floor, type=site_type)["executionId"]
     task_status = check_task_completion(dnac, execution_id)
     return task_status
 
@@ -113,7 +116,7 @@ def main():
 
 
     dnac = DNACenterAPI(base_url='https://10.9.11.226',
-                                username='***REMOVED***',password='***REMOVED***', verify=False, version="2.2.2.3")
+                                username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
     # print(create_area(dnac))
     # print(create_building(dnac))
     # print(create_floor(dnac))
