@@ -5,8 +5,8 @@ COPY Pipfile* /tmp
 RUN cd /tmp && pipenv lock --keep-outdated --requirements > requirements.txt
 
 RUN pip install -r /tmp/requirements.txt
-ENV USERNAME=***REMOVED***
-ENV PASSWORD=***REMOVED***!
+ENV USERNAME=user
+ENV PASSWORD=pass
 
 COPY . .
 # RUN pip install /tmp/netbox-dnac

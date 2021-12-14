@@ -519,12 +519,11 @@ def test_delete_sites():
 
 
 # def test_dnac_auth():
-#     DNACenterAPI(base_url='https://10.9.11.226',
-#                             username='***REMOVED***',password='***REMOVED***', verify=False)
-
+#     dnac = DNACenterAPI(base_url='https://10.9.11.226',
+ #                               username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
 # def test_create_site():
 #     dnac = DNACenterAPI(base_url='https://10.9.11.226',
-#                             username='***REMOVED***',password='***REMOVED***', verify=False)
+#                                username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
 
 #     site = {
 #         "site": {
