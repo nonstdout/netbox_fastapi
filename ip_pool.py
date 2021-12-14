@@ -195,8 +195,8 @@ def main():
 
 
 
-    dnac = DNACenterAPI(base_url='https://10.9.11.226',
-                                    username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
+    dnac = DNACenterAPI(base_url=os.getenv("DNAC_ADDRESS"),
+                                    username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=os.getenv("DNAC_VERIFY"), version=os.getenv("DNAC_VERSION"))
         ## setup site for testing, get id
     import create_site
     # create_site.create_area(dnac)
