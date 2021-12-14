@@ -111,12 +111,12 @@ def main():
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    from dnacentersdk import DNACenterAPI
+    # from dnacentersdk import DNACenterAPI
 
 
 
-    dnac = DNACenterAPI(base_url='https://10.9.11.226',
-                                username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
+    # dnac = DNACenterAPI(base_url='https://10.9.11.226',
+                                # username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
     # print(create_area(dnac))
     # print(create_building(dnac))
     # print(create_floor(dnac))

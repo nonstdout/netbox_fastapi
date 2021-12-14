@@ -8,9 +8,10 @@ fastapi = {extras = ["all"], version = "*"}
 pytest = "*"
 aiofiles = "*"
 dnacentersdk = "*"
+pytest-mock = "*"
 
 [dev-packages]
 pylint = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"

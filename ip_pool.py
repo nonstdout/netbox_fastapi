@@ -1,5 +1,7 @@
 
+import ipaddress
 import os
+from ipaddress import ip_network
 
 def get_execution_status(dnac, execution_id):
     return dnac.custom_caller.call_api('GET',
@@ -98,6 +100,35 @@ def get_parent_pool_id_dna(dnac, pool_name):
 
     return pool.response[0].id
 
+def get_global_pools(dnac):
+    """Get global pools from DNAC and create a lookup table with ip_network objects"""
+    global_pools = dnac.network_settings.get_global_pool()
+    global_pools_obj = {}
+    for pool in global_pools.response:
+        # create ipNetwork object
+        global_pools_obj[pool.ipPoolName] = ip_network(pool.ipPoolCidr)
+    return global_pools_obj
+
+def get_containing_global_pool(dnac, ip_address):
+    """Find name of Global pool that contains this ip subnet"""
+    # get all global pools and thier names
+    ip_address = ip_network(ip_address)
+    global_pools = get_global_pools(dnac)
+        # check which pool contains the ip
+    for pool_name, ipnet in global_pools.items():
+        if ip_address.subnet_of(ipnet):
+            return pool_name
+    
+def get_first_usable_ip(ip_address):
+    """return the first valid ip of a given ipv4 subnet"""
+    first_usable = ip_network(ip_address).hosts()
+    return str(next(first_usable))
+    
+
+
+
+
+
 # Implementation of non-public API as public API is broken
 def reserve_subpool(dnac, **kwargs):
     payload = {
@@ -168,48 +199,49 @@ def main():
                                     username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
         ## setup site for testing, get id
     import create_site
-    create_site.create_area(dnac)
+    # create_site.create_area(dnac)
 
-    global_pool_obj = {
-        "pool_name": "test_global_pool",
-        "dhcp_servers": ["1.1.1.1"],
-        "dns_servers": ["2.2.2.2"],
-        "supernet": "192.168.1.0/24"
-    }
+    # global_pool_obj = {
+    #     "pool_name": "test_global_pool",
+    #     "dhcp_servers": ["1.1.1.1"],
+    #     "dns_servers": ["2.2.2.2"],
+    #     "supernet": "192.168.1.0/24"
+    # }
 
-    create_global_pool(dnac, **global_pool_obj)
+    # create_global_pool(dnac, **global_pool_obj)
 
-    subpool_obj = {
-        "global_pool_name": "test_global_pool",
-        "name": "testsubpool",
-        "_type": "generic",
-        "ipv6AddressSpace": False,
-        "ipv4GlobalPool": "192.168.1.0/24",
-        "ipv4Prefix": True,
-        "ipv4PrefixLength": 25,
-        "ipv4Subnet": "192.168.1.0",
-        "ipv4GateWay": "192.168.1.1",
-        "ipv4DhcpServers": [
-            "1.2.3.4",
-            "1.2.3.5"
-        ],
-        "ipv4DnsServers": [
-            "1.2.3.4",
-            "1.2.3.5"
-        ]
-    }
+    # subpool_obj = {
+    #     "global_pool_name": "test_global_pool",
+    #     "name": "testsubpool",
+    #     "_type": "generic",
+    #     "ipv6AddressSpace": False,
+    #     "ipv4GlobalPool": "192.168.1.0/24",
+    #     "ipv4Prefix": True,
+    #     "ipv4PrefixLength": 25,
+    #     "ipv4Subnet": "192.168.1.0",
+    #     "ipv4GateWay": "192.168.1.1",
+    #     "ipv4DhcpServers": [
+    #         "1.2.3.4",
+    #         "1.2.3.5"
+    #     ],
+    #     "ipv4DnsServers": [
+    #         "1.2.3.4",
+    #         "1.2.3.5"
+    #     ]
+    # }
 
-    site_id = dnac.sites.get_site(name="Global/testarea").response[0].id
-    reserve_subpool(dnac, site_id, **subpool_obj)
+    # site_id = dnac.sites.get_site(name="Global/testarea").response[0].id
+    # reserve_subpool(dnac, site_id, **subpool_obj)
 
-    # cleanup
-    # release subpool
-    release_subpool(dnac, site_id)
-    # delete global pool
-    delete_global_pool(dnac, 'test_global_pool')
-    # cleanup created site
-    create_site.delete_sites(dnac)
-
+    # # cleanup
+    # # release subpool
+    # release_subpool(dnac, site_id)
+    # # delete global pool
+    # delete_global_pool(dnac, 'test_global_pool')
+    # # cleanup created site
+    # create_site.delete_sites(dnac)
+    # print(get_containing_global_pool(dnac, "172.16.1.0"))
+    print(get_first_usable_ip("192.168.1.128/25"))
 
 if __name__ == "__main__":
     main()

@@ -13,9 +13,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from dnacentersdk import DNACenterAPI
 
 
-
 dnac = DNACenterAPI(base_url='https://10.9.11.226',
-                                username=os.getenv("username"),password=os.getenv("password"), verify=False, version="2.2.2.3")
+                                username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version="2.2.2.3")
+
 import create_site
 import ip_pool
 
@@ -92,6 +92,16 @@ class WebhookResponseModel(BaseModel):
     data: WebhookJsonModel
 
 
+def counter(start=0):
+    count = start
+    def add_one():
+        nonlocal count
+        count += 1
+        return count
+    return add_one
+
+pool_id_number = counter(0)
+
 app = FastAPI()
 
 # base test endpoint
@@ -158,41 +168,70 @@ def webhook_received(webhook: Dict[Any, Any]):
     print(webhook)
     if webhook['model'] == "prefix":
         prefix_data = webhook['data']
-        if prefix_data['custom_fields']['DNAC Global']:
-            global_pool_obj = {
-                "pool_name": prefix_data['custom_fields']['DNAC Pool Name'],
-                "dhcp_servers": [], #not required
-                "dns_servers": [], # not required
-                "supernet": prefix_data['prefix']
-            }  
-            return ip_pool.create_global_pool(dnac, **global_pool_obj)
+        site = prefix_data['site']
+        if not site:
+            if prefix_data['custom_fields']['dnac_global_pool_name']:
+        # if prefix_data['custom_fields']['DNAC Global']:
+                global_pool_obj = {
+                    "pool_name": prefix_data['custom_fields']['dnac_global_pool_name'],
+                    "dhcp_servers": prefix_data['custom_fields']['dhcp_servers'], #not required
+                    "dns_servers": prefix_data['custom_fields']['dns_servers'], # not required
+                    "supernet": prefix_data['prefix']
+                }  
+                return ip_pool.create_global_pool(dnac, **global_pool_obj)
+            else:
+                global_pool_obj = {
+                    "pool_name":  f"POOL_{str(pool_id_number())}",
+                    "dhcp_servers": prefix_data['custom_fields']['dhcp_servers'], #not required
+                    "dns_servers": prefix_data['custom_fields']['dns_servers'], # not required
+                    "supernet": prefix_data['prefix']
+                }  
+                return ip_pool.create_global_pool(dnac, **global_pool_obj)
         else:
             sites = dnac.sites.get_site().response
+            # global pool containing this prefix on DNAC
+            global_pool_name = ip_pool.get_containing_global_pool(dnac, prefix_data['prefix'])
+            # set gateway to first usable by default
+            if not prefix_data['custom_fields']['gateway']:
+                gateway = ip_pool.get_first_usable_ip(prefix_data['prefix'])
+            else:
+                gateway = prefix_data['custom_fields']['gateway']
+            # set default pool name with a counter to add 1 to the end of the id
+            if not prefix_data['custom_fields']['DNAC Pool Name']:
+                pool_name = global_pool_name + "_" + str(pool_id_number())
+            else:
+                 pool_name = f"{global_pool_name}_{prefix_data['custom_fields']['DNAC Pool Name']}_POOL".upper()
             for site in sites:
                 if site.name.lower() == prefix_data['site']['slug'].lower():
                     site_heirarchy = site['siteNameHierarchy']
                     site_id = dnac.sites.get_site(name=site_heirarchy).response[0].id
             subpool_obj = {
                 "site_id": site_id,
-                "global_pool_name": prefix_data['custom_fields']['dnac_global_pool'].upper(),
-                "name": prefix_data['custom_fields']['DNAC Pool Name'],
+                "global_pool_name": global_pool_name,
+                "name": pool_name,
                 "type_": prefix_data['custom_fields']['dnac_pool_type'],
                 "ipv6AddressSpace": False,
                 "ipv4GlobalPool": "192.168.1.0/24", # not needed in legacy API which this is
                 "ipv4Prefix": True,
                 "ipv4PrefixLength": prefix_data['prefix'].split("/")[1],
                 "ipv4Subnet": prefix_data['prefix'].split("/")[0],
-                "ipv4GateWay": prefix_data['custom_fields']['gateway'],
+                "ipv4GateWay": gateway,
                 "ipv4DhcpServers": prefix_data['custom_fields']['dhcp_servers'],
                 "ipv4DnsServers":  prefix_data['custom_fields']['dns_servers']
             }
             return ip_pool.reserve_subpool(dnac, **subpool_obj)
     if webhook['model'] == 'region':
         region_data = webhook["data"]
+        # Region parent cant be empty
+        parent = region_data['parent']
+        if not parent:
+            parent_name = "Global"
+        else:
+            parent_name = parent['slug']
         area = {
             "area": {
                 "name": region_data['slug'],
-                "parentName": region_data['parent']['slug'],
+                "parentName": parent_name,
                 }
             }
         return create_site.create_area(dnac, area)
@@ -200,14 +239,25 @@ def webhook_received(webhook: Dict[Any, Any]):
     if webhook['model'] == 'site':
         site_data = webhook['data']
         sites = dnac.sites.get_site().response
-        for site in sites:
-            if site.name.lower() == site_data['region']['slug'].lower():
-                site_heirarchy = site['siteNameHierarchy']
+        # When region is supplied look it up to find dnac hierarchy
+        try:             
+            for site in sites:
+                if site.name.lower() == site_data['region']['slug'].lower():
+                    site_heirarchy = site['siteNameHierarchy']
+        except TypeError as e:
+            # Region should default to global if missing
+            site_heirarchy = "Global"
+        
+        # Building address cant be empty
+        building_address = site_data['physical_address']
+        if not building_address:
+            building_address = "unknown"
+            
         building = {
             "building": {
                 "name": site_data['slug'],
                 "parentName": site_heirarchy,
-                "address": site_data['physical_address']
+                "address": building_address
             }
         }
         return create_site.create_building(dnac, building)
