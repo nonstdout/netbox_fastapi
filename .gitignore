@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 env.sh
+passwords.txt
 bfg-1.14.0.jar
 
 # C extensions
