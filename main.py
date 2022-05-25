@@ -14,7 +14,7 @@ from dnacentersdk import DNACenterAPI
 
 
 dnac = DNACenterAPI(base_url=os.getenv("DNAC_ADDRESS"),
-                                username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=os.getenv("DNAC_VERIFY"), version=os.getenv("DNAC_VERSION"))
+                                username=os.getenv("USERNAME"),password=os.getenv("PASSWORD"), verify=False, version=os.getenv("DNAC_VERSION"))
 
 import create_site
 import ip_pool
