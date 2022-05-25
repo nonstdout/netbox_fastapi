@@ -227,10 +227,10 @@ def webhook_received(webhook: Dict[Any, Any]):
         if not parent:
             parent_name = "Global"
         else:
-            parent_name = parent['slug']
+            parent_name = parent['name']
         area = {
             "area": {
-                "name": region_data['slug'],
+                "name": region_data['name'],
                 "parentName": parent_name,
                 }
             }
@@ -255,7 +255,7 @@ def webhook_received(webhook: Dict[Any, Any]):
             
         building = {
             "building": {
-                "name": site_data['slug'],
+                "name": site_data['name'],
                 "parentName": site_heirarchy,
                 "address": building_address
             }
@@ -270,7 +270,7 @@ def webhook_received(webhook: Dict[Any, Any]):
                 site_heirarchy = site['siteNameHierarchy']
         floor = {
             "floor": {
-                "name": location_data['slug'],
+                "name": location_data['name'],
                 "parentName": site_heirarchy,
                 "rfModel": "Cubes And Walled Offices",
                 "width": 5,
