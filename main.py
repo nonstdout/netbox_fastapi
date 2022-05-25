@@ -202,7 +202,7 @@ def webhook_received(webhook: Dict[Any, Any]):
             else:
                  pool_name = f"{global_pool_name}_{prefix_data['custom_fields']['DNAC Pool Name']}_POOL".upper()
             for site in sites:
-                if site.name.lower() == prefix_data['site']['slug'].lower():
+                if site.name.lower() == prefix_data['site']['name'].lower():
                     site_heirarchy = site['siteNameHierarchy']
                     site_id = dnac.sites.get_site(name=site_heirarchy).response[0].id
             subpool_obj = {
@@ -242,7 +242,7 @@ def webhook_received(webhook: Dict[Any, Any]):
         # When region is supplied look it up to find dnac hierarchy
         try:             
             for site in sites:
-                if site.name.lower() == site_data['region']['slug'].lower():
+                if site.name.lower() == site_data['region']['name'].lower():
                     site_heirarchy = site['siteNameHierarchy']
         except TypeError as e:
             # Region should default to global if missing
@@ -266,7 +266,7 @@ def webhook_received(webhook: Dict[Any, Any]):
         location_data = webhook['data']
         sites = dnac.sites.get_site().response
         for site in sites:
-            if site.name.lower() == location_data['site']['slug'].lower():
+            if site.name.lower() == location_data['site']['name'].lower():
                 site_heirarchy = site['siteNameHierarchy']
         floor = {
             "floor": {
