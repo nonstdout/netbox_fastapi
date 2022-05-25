@@ -1,12 +1,15 @@
 FROM python:3.9
 
 RUN pip install pipenv
-COPY Pipfile* /tmp
+COPY Pipfile* /tmp/
 RUN cd /tmp && pipenv lock --keep-outdated --requirements > requirements.txt
 
 RUN pip install -r /tmp/requirements.txt
-ENV USERNAME=user
-ENV PASSWORD=pass
+ENV USERNAME=_svc_orionNCM
+ENV PASSWORD=uSAY27*0u(
+ENV DNAC_VERSION=2.2.2.3
+ENV DNAC_VERIFY=False
+ENV DNAC_ADDRESS=https://uk-mal-dna-vip.dyson.global.corp
 
 COPY . .
 # RUN pip install /tmp/netbox-dnac
