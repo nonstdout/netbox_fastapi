@@ -1,0 +1,26 @@
+TASK SUCCESS!
+
+Created campus
+
+INFO:     167.98.164.58:0 - "POST /netbox/webhooks HTTP/1.1" 200 OK
+{'event': 'created', 'timestamp': '2022-06-12 13:53:01.808691+00:00', 'model': 'site', 'username': 'admin', 'request_id': '9da7247c-a81d-4575-b777-d67771542eec', 'data': {'id': 26, 'url': '/api/dcim/sites/26/', 'display': 'Campus1', 'name': 'Campus1', 'slug': 'campus1', 'status': {'value': 'active', 'label': 'Active'}, 'region': {'id': 101, 'url': '/api/dcim/regions/101/', 'display': 'singapore', 'name': 'singapore', 'slug': 'singapore', '_depth': 2}, 'group': None, 'tenant': None, 'facility': '', 'asn': None, 'time_zone': None, 'description': '', 'physical_address': '', 'shipping_address': '', 'latitude': None, 'longitude': None, 'contact_name': '', 'contact_phone': '', 'contact_email': '', 'comments': '', 'tags': [], 'custom_fields': {'dnac_site_id': None}, 'created': '2022-06-12', 'last_updated': '2022-06-12T13:53:01.783219Z'}, 'snapshots': {'prechange': None, 'postchange': {'created': '2022-06-12', 'last_updated': '2022-06-12T13:53:01.783Z', 'name': 'Campus1', 'slug': 'campus1', 'status': 'active', 'region': 101, 'group': None, 'tenant': None, 'facility': '', 'asn': None, 'time_zone': None, 'description': '', 'physical_address': '', 'shipping_address': '', 'latitude': None, 'longitude': None, 'contact_name': '', 'contact_phone': '', 'contact_email': '', 'comments': '', 'custom_fields': {'dnac_site_id': None}, 'tags': []}}}
+Task not completed yet, retrying...
+TASK SUCCESS!
+
+Created building 
+
+INFO:     167.98.164.58:0 - "POST /netbox/webhooks HTTP/1.1" 200 OK
+{'event': 'created', 'timestamp': '2022-06-12 13:53:32.724741+00:00', 'model': 'location', 'username': 'admin', 'request_id': 'b78aa177-9111-4fed-a3d0-b11c7acdbcdc', 'data': {'id': 15, 'url': '/api/dcim/locations/15/', 'display': 'Block123', 'name': 'Block123', 'slug': 'block123', 'site': {'id': 26, 'url': '/api/dcim/sites/26/', 'display': 'Campus1', 'name': 'Campus1', 'slug': 'campus1'}, 'parent': None, 'description': '', 'custom_fields': {'location_type': 'Building'}, 'created': '2022-06-12', 'last_updated': '2022-06-12T13:53:32.672714Z', '_depth': 0}, 'snapshots': {'prechange': None, 'postchange': {'created': '2022-06-12', 'last_updated': '2022-06-12T13:53:32.672Z', 'name': 'Block123', 'slug': 'block123', 'site': 26, 'parent': None, 'description': '', 'custom_fields': {'location_type': 'Building'}}}}
+Task not completed yet, retrying...
+Task not completed yet, retrying...
+Task not completed yet, retrying...
+TASK SUCCESS!
+
+
+Created floor
+
+INFO:     167.98.164.58:0 - "POST /netbox/webhooks HTTP/1.1" 200 OK
+{'event': 'created', 'timestamp': '2022-06-12 13:53:59.961551+00:00', 'model': 'location', 'username': 'admin', 'request_id': 'd6ad5f85-b7c6-4b02-ac81-78a5ef9411a5', 'data': {'id': 16, 'url': '/api/dcim/locations/16/', 'display': 'Floor1', 'name': 'Floor1', 'slug': 'floor1', 'site': {'id': 26, 'url': '/api/dcim/sites/26/', 'display': 'Campus1', 'name': 'Campus1', 'slug': 'campus1'}, 'parent': {'id': 15, 'url': '/api/dcim/locations/15/', 'display': 'Block123', 'name': 'Block123', 'slug': 'block123', '_depth': 0}, 'description': '', 'custom_fields': {'location_type': 'Floor'}, 'created': '2022-06-12', 'last_updated': '2022-06-12T13:53:59.946891Z', '_depth': 1}, 'snapshots': {'prechange': None, 'postchange': {'created': '2022-06-12', 'last_updated': '2022-06-12T13:53:59.946Z', 'name': 'Floor1', 'slug': 'floor1', 'site': 26, 'parent': 15, 'description': '', 'custom_fields': {'location_type': 'Floor'}}}}
+Task not completed yet, retrying...
+TASK SUCCESS!
+INFO:     167.98.164.58:0 - "POST /netbox/webhooks HTTP/1.1" 200 OK
