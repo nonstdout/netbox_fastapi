@@ -332,7 +332,7 @@ def webhook_received(webhook: Dict[Any, Any]):
                 "Authorization": f"Token {os.getenv('NETBOX_TOKEN')}",
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }).json()
+            }, verify=False).json()
 
             for site in netbox_sites['results']:
                 if site['name'] == location_data['site']['name']:
