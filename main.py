@@ -222,19 +222,56 @@ def webhook_received(webhook: Dict[Any, Any]):
             return ip_pool.reserve_subpool(dnac, **subpool_obj)
     if webhook['model'] == 'region':
         region_data = webhook["data"]
-        # Region parent cant be empty
-        parent = region_data['parent']
-        if not parent:
-            parent_name = "Global"
-        else:
-            parent_name = parent['name']
+        sites = dnac.sites.get_site().response
+        # When region is supplied look it up to find dnac hierarchy
+        # print(sites)
+        # print(region_data)
+        try:             
+            for site in sites:
+                if site.name.lower() == region_data['parent']['name'].lower():
+                    site_heirarchy = site['siteNameHierarchy']
+        except TypeError as e:
+            # Region should default to global if missing
+            site_heirarchy = "Global"
+        # parent = region_data['parent']
+        # if not parent:
+        #     parent_name = "Global"
+        # else:
+        #     parent_name = parent['name']
         area = {
             "area": {
                 "name": region_data['name'],
-                "parentName": parent_name,
+                "parentName": site_heirarchy,
                 }
             }
+        print(area)
         return create_site.create_area(dnac, area)
+
+    # if webhook['model'] == 'site':
+    #     site_data = webhook['data']
+    #     sites = dnac.sites.get_site().response
+    #     # When region is supplied look it up to find dnac hierarchy
+    #     try:             
+    #         for site in sites:
+    #             if site.name.lower() == site_data['region']['name'].lower():
+    #                 site_heirarchy = site['siteNameHierarchy']
+    #     except TypeError as e:
+    #         # Region should default to global if missing
+    #         site_heirarchy = "Global"
+        
+    #     # Building address cant be empty
+    #     building_address = site_data['physical_address']
+    #     if not building_address:
+    #         building_address = "unknown"
+            
+    #     building = {
+    #         "building": {
+    #             "name": site_data['name'],
+    #             "parentName": site_heirarchy,
+    #             "address": building_address
+    #         }
+    #     }
+    #     return create_site.create_building(dnac, building)
 
     if webhook['model'] == 'site':
         site_data = webhook['data']
@@ -249,25 +286,62 @@ def webhook_received(webhook: Dict[Any, Any]):
             site_heirarchy = "Global"
         
         # Building address cant be empty
-        building_address = site_data['physical_address']
-        if not building_address:
-            building_address = "unknown"
+        # building_address = site_data['physical_address']
+        # if not building_address:
+        #     building_address = "unknown"
             
-        building = {
-            "building": {
+        # building = {
+        #     "building": {
+        #         "name": site_data['name'],
+        #         "parentName": site_heirarchy,
+        #         "address": building_address
+        #     }
+        # }
+        # return create_site.create_building(dnac, building)
+
+
+
+
+        area = {
+            "area": {
                 "name": site_data['name'],
                 "parentName": site_heirarchy,
-                "address": building_address
+                }
             }
-        }
-        return create_site.create_building(dnac, building)
+        return create_site.create_area(dnac, area)
 
     if webhook['model'] == 'location':
         location_data = webhook['data']
         sites = dnac.sites.get_site().response
+            
+        # if there is no parent its a building, the parent is a site.
+        if location_data['parent'] == None:
+            # find matching site name in DNAC based on Netbox site name
+            for site in sites:
+                if site.name.lower() == location_data['site']['name'].lower():
+                    site_heirarchy = site['siteNameHierarchy']
+  
+            # Building address cant be empty
+            building_address = location_data.get('physical_address')
+            if not building_address:
+                building_address = "unknown"
+                
+            building = {
+                "building": {
+                    "name": location_data['name'],
+                    "parentName": site_heirarchy,
+                    "address": building_address
+                }
+            }
+            return create_site.create_building(dnac, building)
+        
+
+        # if there is a parent then it must be a floor.
         for site in sites:
-            if site.name.lower() == location_data['site']['name'].lower():
+            # find matching site name in DNAC based on Netbox parent location
+           if site.name.lower() == location_data['parent'].get('name').lower():
                 site_heirarchy = site['siteNameHierarchy']
+
         floor = {
             "floor": {
                 "name": location_data['name'],
@@ -278,4 +352,6 @@ def webhook_received(webhook: Dict[Any, Any]):
                 "height": 5
             }
         }
+        
         return create_site.create_floor(dnac, floor)
+
