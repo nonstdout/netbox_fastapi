@@ -6,6 +6,7 @@ import os
 from fastapi import FastAPI
 from pydantic import BaseModel, Json, ValidationError
 from pydantic.utils import Obj
+import requests
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -200,7 +201,9 @@ def webhook_received(webhook: Dict[Any, Any]):
             if not prefix_data['custom_fields']['DNAC Pool Name']:
                 pool_name = global_pool_name + "_" + str(pool_id_number())
             else:
-                 pool_name = f"{global_pool_name}_{prefix_data['custom_fields']['DNAC Pool Name']}_POOL".upper()
+                fixed_name = global_pool_name.split("_")[1]
+                pool_name = f"{prefix_data['custom_fields']['DNAC Pool Name']}_POOL_{fixed_name}_{prefix_data['prefix']}".upper()
+                # AP_POOL_SGSAM_172.16.1.0/24
             for site in sites:
                 if site.name.lower() == prefix_data['site']['name'].lower():
                     site_heirarchy = site['siteNameHierarchy']
@@ -322,9 +325,18 @@ def webhook_received(webhook: Dict[Any, Any]):
                     site_heirarchy = site['siteNameHierarchy']
   
             # Building address cant be empty
-            building_address = location_data.get('physical_address')
-            if not building_address:
-                building_address = "unknown"
+            building_address = "unknown"
+
+            # Try to get physical address from parent site object
+            netbox_sites = requests.get(os.getenv("NETBOX_ADDRESS") + "/api/dcim/sites", headers={
+                "Authorization": f"Token {os.getenv('NETBOX_TOKEN')}",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }).json()
+
+            for site in netbox_sites['results']:
+                if site['name'] == location_data['site']['name']:
+                    building_address = site['physical_address']
                 
             building = {
                 "building": {
